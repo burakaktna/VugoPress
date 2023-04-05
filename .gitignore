@@ -1,0 +1,29 @@
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Ignore binary directory and dependencies
+/bin
+/vendor
+
+# Ignore IDE specific files
+.idea
+.vscode
+
+# Ignore environment files
+.env
+
+# Ignore go mod and go sum files
+go.mod
+go.sum
+
+# Ignore db data files
+vugopress-db-data
