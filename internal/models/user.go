@@ -1,6 +1,9 @@
 package models
 
 import (
+	"fmt"
+	"github.com/golang-jwt/jwt/v4"
+	"golang.org/x/crypto/bcrypt"
 	"time"
 )
 
@@ -20,4 +23,24 @@ type User struct {
 	UsefulLinks []UsefulLink `json:"useful_links" gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	CreatedAt   time.Time    `json:"created_at" gorm:"autoCreateTime;not null"`
 	UpdatedAt   time.Time    `json:"updated_at" gorm:"autoUpdateTime"`
+}
+
+func (u *User) CheckPassword(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+	return err == nil
+}
+
+func (u *User) GenerateToken(secret string) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id":    u.ID,
+		"email": u.Email,
+		"exp":   time.Now().Add(time.Hour * 24).Unix(),
+	})
+
+	tokenString, err := token.SignedString([]byte(secret))
+	if err != nil {
+		return "", fmt.Errorf("could not sign the token: %w", err)
+	}
+
+	return tokenString, nil
 }

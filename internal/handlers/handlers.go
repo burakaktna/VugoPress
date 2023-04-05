@@ -11,6 +11,10 @@ import (
 func RegisterHandlers(app *fiber.App, db *gorm.DB, jwtMiddleware fiber.Handler) {
 	cfg := config.New()
 
+	userRepo := repository.NewUserRepository(db)
+	userService := services.NewUserService(userRepo, cfg.AppKey)
+	RegisterUserHandlers(app, userService)
+
 	articleRepo := repository.NewArticleRepository(db)
 	articleService := services.NewArticleService(articleRepo)
 	RegisterArticleHandlers(app, articleService, jwtMiddleware)
