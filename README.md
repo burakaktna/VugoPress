@@ -8,11 +8,8 @@ To use the API, you can send HTTP requests to the following endpoints:
 
 ### Users
 
-- `GET /users`: Get all users
-- `POST /users`: Create a new user
-- `GET /users/:id`: Get a user by ID
-- `PUT /users/:id`: Update a user by ID
-- `DELETE /users/:id`: Delete a user by ID
+- `POST /register`: Register route
+- `POST /login`: Login route
 
 ### Articles
 
