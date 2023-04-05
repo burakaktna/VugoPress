@@ -11,7 +11,7 @@ type User struct {
 	ID          uint         `json:"id" gorm:"primary_key"`
 	SiteName    string       `json:"site_name" gorm:"size:255;not null" validate:"required"`
 	Phone       string       `json:"phone" gorm:"size:20"`
-	Email       string       `json:"email" gorm:"size:255"`
+	Email       string       `json:"email" gorm:"size:255;not null;unique" validate:"required,email"`
 	Address     string       `json:"address" gorm:"type:text"`
 	Name        string       `json:"name" gorm:"size:255;not null" validate:"required"`
 	Surname     string       `json:"surname" gorm:"size:255;not null" validate:"required"`

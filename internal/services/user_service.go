@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/burakaktna/VugoPress/internal/models"
 	"github.com/burakaktna/VugoPress/internal/repository"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService interface {
@@ -29,7 +30,13 @@ func NewUserService(repo repository.UserRepository, appKey string) UserService {
 }
 
 func (s *userService) Register(user *models.User) (*models.User, error) {
-	err := s.repo.CreateUser(user)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+
+	user.Password = string(hashedPassword)
+	err = s.repo.CreateUser(user)
 	if err != nil {
 		return nil, err
 	}
