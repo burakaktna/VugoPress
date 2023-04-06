@@ -21,8 +21,7 @@
 # Ignore environment files
 .env
 
-# Ignore go mod and go sum files
-go.mod
+# Ignore go sum files
 go.sum
 
 # Ignore db data files
