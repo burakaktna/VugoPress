@@ -15,7 +15,7 @@ type User struct {
 	Address     string       `json:"address" gorm:"type:text"`
 	Name        string       `json:"name" gorm:"size:255;not null" validate:"required"`
 	Surname     string       `json:"surname" gorm:"size:255;not null" validate:"required"`
-	Password    string       `json:"-" gorm:"size:255;not null" validate:"required"`
+	Password    string       `json:"password" gorm:"size:255;not null" validate:"required"`
 	SiteDomain  string       `json:"site_domain" gorm:"size:255;not null" validate:"required"`
 	Contacts    []Contact    `json:"contacts" gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Articles    []Article    `json:"articles" gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
@@ -23,6 +23,58 @@ type User struct {
 	UsefulLinks []UsefulLink `json:"useful_links" gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	CreatedAt   time.Time    `json:"created_at" gorm:"autoCreateTime;not null"`
 	UpdatedAt   time.Time    `json:"updated_at" gorm:"autoUpdateTime"`
+}
+
+type UserDTO struct {
+	ID         uint      `json:"id"`
+	SiteName   string    `json:"site_name"`
+	Phone      string    `json:"phone"`
+	Email      string    `json:"email"`
+	Address    string    `json:"address"`
+	Name       string    `json:"name"`
+	Surname    string    `json:"surname"`
+	SiteDomain string    `json:"site_domain"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
+type UserPost struct {
+	SiteName   string `json:"site_name" validate:"required"`
+	Phone      string `json:"phone"`
+	Email      string `json:"email" validate:"required,email"`
+	Address    string `json:"address"`
+	Name       string `json:"name" validate:"required"`
+	Surname    string `json:"surname" validate:"required"`
+	Password   string `json:"password" validate:"required"`
+	SiteDomain string `json:"site_domain" validate:"required"`
+}
+
+func (u *User) ToDTO() *UserDTO {
+	return &UserDTO{
+		ID:         u.ID,
+		SiteName:   u.SiteName,
+		Phone:      u.Phone,
+		Email:      u.Email,
+		Address:    u.Address,
+		Name:       u.Name,
+		Surname:    u.Surname,
+		SiteDomain: u.SiteDomain,
+		CreatedAt:  u.CreatedAt,
+		UpdatedAt:  u.UpdatedAt,
+	}
+}
+
+func (p *UserPost) ToUser() *User {
+	return &User{
+		SiteName:   p.SiteName,
+		Phone:      p.Phone,
+		Email:      p.Email,
+		Address:    p.Address,
+		Name:       p.Name,
+		Surname:    p.Surname,
+		Password:   "", // Not setting password here, it should be hashed before setting
+		SiteDomain: p.SiteDomain,
+	}
 }
 
 func (u *User) CheckPassword(password string) bool {

@@ -22,14 +22,14 @@ func RegisterUserHandlers(app *fiber.App, userService services.UserService) {
 }
 
 func (h *UserHandler) Register(c *fiber.Ctx) error {
-	user := new(models.User)
-	if err := c.BodyParser(user); err != nil {
+	userPost := new(models.UserPost)
+	if err := c.BodyParser(userPost); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Cannot parse JSON",
 		})
 	}
 
-	registeredUser, err := h.userService.Register(user)
+	registeredUser, err := h.userService.Register(userPost)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
