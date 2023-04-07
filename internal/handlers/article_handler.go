@@ -22,7 +22,7 @@ func RegisterArticleHandlers(app *fiber.App, articleService services.ArticleServ
 
 	app.Get("/articles", articleHandler.GetArticles)
 	app.Post("/articles", jwtMiddleware, articleHandler.CreateArticle)
-	app.Get("/articles/:id", jwtMiddleware, articleHandler.GetArticle)
+	app.Get("/articles/:id", articleHandler.GetArticle)
 	app.Put("/articles/:id", jwtMiddleware, articleHandler.UpdateArticle)
 	app.Delete("/articles/:id", jwtMiddleware, articleHandler.DeleteArticle)
 }
