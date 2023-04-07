@@ -33,7 +33,7 @@ func (s *contactService) CreateContact(contact *models.Contact) (*models.Contact
 		return nil, err
 	}
 
-	sendContactEmail(contact, err, s)
+	go sendContactEmail(contact, err, s)
 
 	return contact, nil
 }
