@@ -19,9 +19,9 @@ func NewUsefulLinkHandler(usefulLinkService services.UsefulLinksService) *Useful
 func RegisterUsefulLinkHandlers(app *fiber.App, usefulLinkService services.UsefulLinksService, jwtMiddleware fiber.Handler) {
 	usefulLinkHandler := NewUsefulLinkHandler(usefulLinkService)
 
-	app.Get("/useful_links", jwtMiddleware, usefulLinkHandler.GetUsefulLinks)
+	app.Get("/useful_links", usefulLinkHandler.GetUsefulLinks)
 	app.Post("/useful_links", jwtMiddleware, usefulLinkHandler.CreateUsefulLink)
-	app.Get("/useful_links/:id", jwtMiddleware, usefulLinkHandler.GetUsefulLink)
+	app.Get("/useful_links/:id", usefulLinkHandler.GetUsefulLink)
 	app.Put("/useful_links/:id", jwtMiddleware, usefulLinkHandler.UpdateUsefulLink)
 	app.Delete("/useful_links/:id", jwtMiddleware, usefulLinkHandler.DeleteUsefulLink)
 }
