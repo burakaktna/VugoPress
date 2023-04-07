@@ -19,9 +19,9 @@ func NewTagHandler(tagService services.TagService) *TagHandler {
 func RegisterTagHandlers(app *fiber.App, tagService services.TagService, jwtMiddleware fiber.Handler) {
 	tagHandler := NewTagHandler(tagService)
 
-	app.Get("/tags", jwtMiddleware, tagHandler.GetTags)
+	app.Get("/tags", tagHandler.GetTags)
 	app.Post("/tags", jwtMiddleware, tagHandler.CreateTag)
-	app.Get("/tags/:id", jwtMiddleware, tagHandler.GetTag)
+	app.Get("/tags/:id", tagHandler.GetTag)
 	app.Put("/tags/:id", jwtMiddleware, tagHandler.UpdateTag)
 	app.Delete("/tags/:id", jwtMiddleware, tagHandler.DeleteTag)
 }
