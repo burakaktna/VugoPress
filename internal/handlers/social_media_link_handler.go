@@ -19,9 +19,9 @@ func NewSocialMediaLinkHandler(service services.SocialMediaLinkService) *SocialM
 func RegisterSocialMediaLinkHandlers(app *fiber.App, socialMediaLinkService services.SocialMediaLinkService, jwtMiddleware fiber.Handler) {
 	socialMediaLinkHandler := NewSocialMediaLinkHandler(socialMediaLinkService)
 
-	app.Get("/social_media_links", jwtMiddleware, socialMediaLinkHandler.GetSocialMediaLinks)
+	app.Get("/social_media_links", socialMediaLinkHandler.GetSocialMediaLinks)
 	app.Post("/social_media_links", jwtMiddleware, socialMediaLinkHandler.CreateSocialMediaLink)
-	app.Get("/social_media_links/:id", jwtMiddleware, socialMediaLinkHandler.GetSocialMediaLink)
+	app.Get("/social_media_links/:id", socialMediaLinkHandler.GetSocialMediaLink)
 	app.Put("/social_media_links/:id", jwtMiddleware, socialMediaLinkHandler.UpdateSocialMediaLink)
 	app.Delete("/social_media_links/:id", jwtMiddleware, socialMediaLinkHandler.DeleteSocialMediaLink)
 }
