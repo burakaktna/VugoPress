@@ -3,32 +3,32 @@ package services
 import (
 	"fmt"
 	"github.com/burakaktna/VugoPress/internal/models"
-	"github.com/burakaktna/VugoPress/internal/repository"
+	"github.com/jinzhu/gorm"
 	"log"
 )
 
 type ContactService interface {
-	CreateContact(contact *models.Contact) (*models.Contact, error)
-	GetContacts() ([]*models.Contact, error)
-	GetContact(id uint) (*models.Contact, error)
-	UpdateContact(id uint, updates *models.Contact) (*models.Contact, error)
-	DeleteContact(id uint) error
+	Create(contact *models.Contact) (*models.Contact, error)
+	Index() ([]*models.Contact, error)
+	Show(id uint) (*models.Contact, error)
+	Update(updates *models.Contact) (*models.Contact, error)
+	Delete(id uint) error
 }
 
 type contactService struct {
-	repo         repository.ContactRepository
+	db           *gorm.DB
 	emailService EmailService
 }
 
-func NewContactService(repo repository.ContactRepository, emailService EmailService) ContactService {
+func NewContactService(db *gorm.DB, emailService EmailService) ContactService {
 	return &contactService{
-		repo:         repo,
+		db:           db,
 		emailService: emailService,
 	}
 }
 
-func (s *contactService) CreateContact(contact *models.Contact) (*models.Contact, error) {
-	err := s.repo.CreateContact(contact)
+func (s *contactService) Create(contact *models.Contact) (*models.Contact, error) {
+	err := s.db.Create(contact).Error
 	if err != nil {
 		return nil, err
 	}
@@ -38,20 +38,24 @@ func (s *contactService) CreateContact(contact *models.Contact) (*models.Contact
 	return contact, nil
 }
 
-func (s *contactService) GetContacts() ([]*models.Contact, error) {
-	return s.repo.GetContacts()
+func (s *contactService) Index() ([]*models.Contact, error) {
+	var contacts []*models.Contact
+	err := s.db.Find(&contacts).Error
+	return contacts, err
 }
 
-func (s *contactService) GetContact(id uint) (*models.Contact, error) {
-	return s.repo.GetContact(id)
+func (s *contactService) Show(id uint) (*models.Contact, error) {
+	var contact models.Contact
+	err := s.db.First(&contact, id).Error
+	return &contact, err
 }
 
-func (s *contactService) UpdateContact(id uint, updates *models.Contact) (*models.Contact, error) {
-	return s.repo.UpdateContact(id, updates)
+func (s *contactService) Update(updates *models.Contact) (*models.Contact, error) {
+	return updates, s.db.Updates(&updates).Error
 }
 
-func (s *contactService) DeleteContact(id uint) error {
-	return s.repo.DeleteContact(id)
+func (s *contactService) Delete(id uint) error {
+	return s.db.Delete(&models.Contact{}, id).Error
 }
 
 func sendContactEmail(contact *models.Contact, err error, s *contactService) {

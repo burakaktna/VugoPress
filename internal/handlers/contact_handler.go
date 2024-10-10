@@ -3,10 +3,12 @@ package handlers
 import (
 	"github.com/burakaktna/VugoPress/internal/models"
 	"github.com/burakaktna/VugoPress/internal/services"
-	"strconv"
-
+	"github.com/burakaktna/VugoPress/pkg/utils"
 	"github.com/gofiber/fiber/v2"
+	"strconv"
 )
+
+var validator = &utils.XValidator{}
 
 type ContactHandler struct {
 	contactService services.ContactService
@@ -27,7 +29,7 @@ func RegisterContactHandlers(app *fiber.App, contactService services.ContactServ
 }
 
 func (h *ContactHandler) GetContacts(c *fiber.Ctx) error {
-	contacts, err := h.contactService.GetContacts()
+	contacts, err := h.contactService.Index()
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -35,14 +37,20 @@ func (h *ContactHandler) GetContacts(c *fiber.Ctx) error {
 }
 
 func (h *ContactHandler) CreateContact(c *fiber.Ctx) error {
-	contact := new(models.Contact)
-	if err := c.BodyParser(contact); err != nil {
+	var contact models.Contact
+	if err := c.BodyParser(&contact); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Cannot parse JSON",
 		})
 	}
 
-	createdContact, err := h.contactService.CreateContact(contact)
+	var errors []utils.ErrorResponse
+	errors = validator.Validate(contact)
+	if errors != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(errors)
+	}
+
+	createdContact, err := h.contactService.Create(&contact)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -56,7 +64,7 @@ func (h *ContactHandler) GetContact(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid contact ID"})
 	}
 
-	contact, err := h.contactService.GetContact(uint(id))
+	contact, err := h.contactService.Show(uint(id))
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Contact not found"})
 	}
@@ -69,15 +77,15 @@ func (h *ContactHandler) UpdateContact(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid contact ID"})
 	}
 
-	updates := new(models.Contact)
-	if err := c.BodyParser(updates); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Cannot parse JSON",
+	updates, err := h.contactService.Show(uint(id))
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Contact not found",
 		})
 	}
-	updatedContact, err := h.contactService.UpdateContact(uint(id), updates)
+	updatedContact, err := h.contactService.Update(updates)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Contact not found"})
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Update is unsuccessful"})
 	}
 
 	return c.JSON(updatedContact)
@@ -88,7 +96,7 @@ func (h *ContactHandler) DeleteContact(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid contact ID"})
 	}
-	err = h.contactService.DeleteContact(uint(id))
+	err = h.contactService.Delete(uint(id))
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Contact not found"})
 	}

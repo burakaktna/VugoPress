@@ -1,7 +1,7 @@
 package config
 
 import (
-	"log"
+	"github.com/gofiber/fiber/v2/log"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -22,7 +22,7 @@ type Config struct {
 }
 
 func New() *Config {
-	err := godotenv.Load(".env")
+	err := godotenv.Load("../../.env")
 	if err != nil {
 		log.Fatalf("Hata: .env dosyası yüklenemedi. %v", err)
 	}

@@ -20,8 +20,7 @@ func RegisterHandlers(app *fiber.App, db *gorm.DB, jwtMiddleware fiber.Handler) 
 	RegisterArticleHandlers(app, articleService, jwtMiddleware)
 
 	emailService := services.NewEmailService(cfg)
-	contactRepo := repository.NewContactRepository(db)
-	contactService := services.NewContactService(contactRepo, emailService)
+	contactService := services.NewContactService(db, emailService)
 	RegisterContactHandlers(app, contactService, jwtMiddleware)
 
 	usefulLinkRepo := repository.NewUsefulLinkRepository(db)

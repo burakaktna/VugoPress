@@ -27,7 +27,7 @@ func (r *articleRepository) CreateArticle(article *models.Article) error {
 
 func (r *articleRepository) GetArticles() ([]*models.Article, error) {
 	var articles []*models.Article
-	err := r.db.Find(&articles).Error
+	err := r.db.Offset(0).Limit(10).Find(&articles).Error
 	return articles, err
 }
 
