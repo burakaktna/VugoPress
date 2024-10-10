@@ -2,10 +2,10 @@
 package handlers
 
 import (
-	"github.com/burakaktna/VugoPress/internal/models"
-	"github.com/burakaktna/VugoPress/internal/services"
 	"strconv"
 
+	"github.com/burakaktna/VugoPress/internal/models"
+	"github.com/burakaktna/VugoPress/internal/services"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -28,7 +28,7 @@ func RegisterArticleHandlers(app *fiber.App, articleService services.ArticleServ
 }
 
 func (h *ArticleHandler) GetArticles(c *fiber.Ctx) error {
-	articles, err := h.articleService.GetArticles()
+	articles, err := h.articleService.Index()
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -43,7 +43,7 @@ func (h *ArticleHandler) CreateArticle(c *fiber.Ctx) error {
 		})
 	}
 
-	createdArticle, err := h.articleService.CreateArticle(article)
+	createdArticle, err := h.articleService.Create(article)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -57,7 +57,7 @@ func (h *ArticleHandler) GetArticle(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid article ID"})
 	}
 
-	article, err := h.articleService.GetArticle(uint(id))
+	article, err := h.articleService.Show(uint(id))
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Article not found"})
 	}
@@ -76,7 +76,7 @@ func (h *ArticleHandler) UpdateArticle(c *fiber.Ctx) error {
 			"error": "Cannot parse JSON, ",
 		})
 	}
-	guncellenenMakale, err := h.articleService.UpdateArticle(uint(id), updates)
+	guncellenenMakale, err := h.articleService.Update(uint(id), updates)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Makale bulunamadı"})
 	}
@@ -88,7 +88,7 @@ func (h *ArticleHandler) DeleteArticle(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Geçersiz makale ID"})
 	}
-	err = h.articleService.DeleteArticle(uint(id))
+	err = h.articleService.Delete(uint(id))
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Makale bulunamadı"})
 	}

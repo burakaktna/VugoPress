@@ -2,46 +2,54 @@ package services
 
 import (
 	"github.com/burakaktna/VugoPress/internal/models"
-	"github.com/burakaktna/VugoPress/internal/repository"
+	"github.com/jinzhu/gorm"
 )
 
-type UsefulLinksService interface {
-	CreateUsefulLink(usefulLink *models.UsefulLink) (*models.UsefulLink, error)
-	GetUsefulLinks() ([]*models.UsefulLink, error)
-	GetUsefulLink(id uint) (*models.UsefulLink, error)
-	UpdateUsefulLink(id uint, updates *models.UsefulLink) (*models.UsefulLink, error)
-	DeleteUsefulLink(id uint) error
+type UsefulLinkService interface {
+	Create(usefulLink *models.UsefulLink) (*models.UsefulLink, error)
+	Index() ([]*models.UsefulLink, error)
+	Show(id uint) (*models.UsefulLink, error)
+	Update(id uint, updates *models.UsefulLink) (*models.UsefulLink, error)
+	Delete(id uint) error
 }
 
-type usefulLinksService struct {
-	repo repository.UsefulLinkRepository
+type usefulLinkService struct {
+	db *gorm.DB
 }
 
-func NewUsefulLinksService(repo repository.UsefulLinkRepository) UsefulLinksService {
-	return &usefulLinksService{repo: repo}
+func NewUsefulLinkService(db *gorm.DB) UsefulLinkService {
+	return &usefulLinkService{db: db}
 }
 
-func (s *usefulLinksService) CreateUsefulLink(usefulLink *models.UsefulLink) (*models.UsefulLink, error) {
-	err := s.repo.CreateUsefulLink(usefulLink)
+func (s *usefulLinkService) Create(usefulLink *models.UsefulLink) (*models.UsefulLink, error) {
+	err := s.db.Create(usefulLink).Error
 	if err != nil {
 		return nil, err
 	}
-
 	return usefulLink, nil
 }
 
-func (s *usefulLinksService) GetUsefulLinks() ([]*models.UsefulLink, error) {
-	return s.repo.GetUsefulLinks()
+func (s *usefulLinkService) Index() ([]*models.UsefulLink, error) {
+	var links []*models.UsefulLink
+	err := s.db.Find(&links).Error
+	return links, err
 }
 
-func (s *usefulLinksService) GetUsefulLink(id uint) (*models.UsefulLink, error) {
-	return s.repo.GetUsefulLink(id)
+func (s *usefulLinkService) Show(id uint) (*models.UsefulLink, error) {
+	var link models.UsefulLink
+	err := s.db.First(&link, id).Error
+	return &link, err
 }
 
-func (s *usefulLinksService) UpdateUsefulLink(id uint, updates *models.UsefulLink) (*models.UsefulLink, error) {
-	return s.repo.UpdateUsefulLink(id, updates)
+func (s *usefulLinkService) Update(id uint, updates *models.UsefulLink) (*models.UsefulLink, error) {
+	var link models.UsefulLink
+	if err := s.db.First(&link, id).Error; err != nil {
+		return nil, err
+	}
+	err := s.db.Model(&link).Updates(updates).Error
+	return &link, err
 }
 
-func (s *usefulLinksService) DeleteUsefulLink(id uint) error {
-	return s.repo.DeleteUsefulLink(id)
+func (s *usefulLinkService) Delete(id uint) error {
+	return s.db.Delete(&models.UsefulLink{}, id).Error
 }

@@ -1,10 +1,11 @@
 package handlers
 
 import (
-	"github.com/burakaktna/VugoPress/internal/models"
-	"github.com/burakaktna/VugoPress/internal/services"
+	"github.com/burakaktna/VugoPress/pkg/utils"
 	"strconv"
 
+	"github.com/burakaktna/VugoPress/internal/models"
+	"github.com/burakaktna/VugoPress/internal/services"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -27,7 +28,7 @@ func RegisterTagHandlers(app *fiber.App, tagService services.TagService, jwtMidd
 }
 
 func (h *TagHandler) GetTags(c *fiber.Ctx) error {
-	tags, err := h.tagService.GetTags()
+	tags, err := h.tagService.Index()
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -38,11 +39,17 @@ func (h *TagHandler) CreateTag(c *fiber.Ctx) error {
 	tag := new(models.Tag)
 	if err := c.BodyParser(tag); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Cannot parse JSON",
+			"error": "JSON ayrıştırılamıyor",
 		})
 	}
 
-	createdTag, err := h.tagService.CreateTag(tag)
+	var errors []utils.ErrorResponse
+	errors = validator.Validate(tag)
+	if errors != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(errors)
+	}
+
+	createdTag, err := h.tagService.Create(tag)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -56,7 +63,7 @@ func (h *TagHandler) GetTag(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid tag ID"})
 	}
 
-	tag, err := h.tagService.GetTag(uint(id))
+	tag, err := h.tagService.Show(uint(id))
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Tag not found"})
 	}
@@ -66,18 +73,25 @@ func (h *TagHandler) GetTag(c *fiber.Ctx) error {
 func (h *TagHandler) UpdateTag(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid tag ID"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Geçersiz etiket ID"})
 	}
 
 	updates := new(models.Tag)
 	if err := c.BodyParser(updates); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Cannot parse JSON",
+			"error": "JSON ayrıştırılamıyor",
 		})
 	}
-	updatedTag, err := h.tagService.UpdateTag(uint(id), updates)
+
+	var errors []utils.ErrorResponse
+	errors = validator.Validate(updates)
+	if errors != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(errors)
+	}
+
+	updatedTag, err := h.tagService.Update(uint(id), updates)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Tag not found"})
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Etiket bulunamadı"})
 	}
 
 	return c.JSON(updatedTag)
@@ -88,7 +102,7 @@ func (h *TagHandler) DeleteTag(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid tag ID"})
 	}
-	err = h.tagService.DeleteTag(uint(id))
+	err = h.tagService.Delete(uint(id))
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Tag not found"})
 	}

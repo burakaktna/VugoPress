@@ -1,11 +1,12 @@
 package handlers
 
 import (
+	"strconv"
+
 	"github.com/burakaktna/VugoPress/internal/models"
 	"github.com/burakaktna/VugoPress/internal/services"
 	"github.com/burakaktna/VugoPress/pkg/utils"
 	"github.com/gofiber/fiber/v2"
-	"strconv"
 )
 
 var validator = &utils.XValidator{}

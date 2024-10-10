@@ -2,29 +2,30 @@ package services
 
 import (
 	"fmt"
+
 	"github.com/burakaktna/VugoPress/internal/models"
-	"github.com/burakaktna/VugoPress/internal/repository"
+	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService interface {
 	Register(user *models.UserPost) (*models.UserDTO, error)
 	Login(email string, password string) (string, error)
-	CreateUser(user *models.UserPost) (*models.UserDTO, error)
-	GetUsers() ([]*models.UserDTO, error)
-	GetUser(id uint) (*models.UserDTO, error)
-	UpdateUser(id uint, updates *models.UserPost) (*models.UserDTO, error)
-	DeleteUser(id uint) error
+	Create(user *models.UserPost) (*models.UserDTO, error)
+	Index() ([]*models.UserDTO, error)
+	Show(id uint) (*models.UserDTO, error)
+	Update(id uint, updates *models.UserPost) (*models.UserDTO, error)
+	Delete(id uint) error
 }
 
 type userService struct {
-	repo   repository.UserRepository
+	db     *gorm.DB
 	appKey string
 }
 
-func NewUserService(repo repository.UserRepository, appKey string) UserService {
+func NewUserService(db *gorm.DB, appKey string) UserService {
 	return &userService{
-		repo:   repo,
+		db:     db,
 		appKey: appKey,
 	}
 }
@@ -37,7 +38,7 @@ func (s *userService) Register(userPost *models.UserPost) (*models.UserDTO, erro
 
 	user := userPost.ToUser()
 	user.Password = string(hashedPassword)
-	err = s.repo.CreateUser(user)
+	err = s.db.Create(user).Error
 	if err != nil {
 		return nil, err
 	}
@@ -46,8 +47,8 @@ func (s *userService) Register(userPost *models.UserPost) (*models.UserDTO, erro
 }
 
 func (s *userService) Login(email, password string) (string, error) {
-	user, err := s.repo.GetUserByEmail(email)
-	if err != nil {
+	var user models.User
+	if err := s.db.Where("email = ?", email).First(&user).Error; err != nil {
 		return "", err
 	}
 
@@ -63,9 +64,9 @@ func (s *userService) Login(email, password string) (string, error) {
 	return token, nil
 }
 
-func (s *userService) CreateUser(userPost *models.UserPost) (*models.UserDTO, error) {
+func (s *userService) Create(userPost *models.UserPost) (*models.UserDTO, error) {
 	user := userPost.ToUser()
-	err := s.repo.CreateUser(user)
+	err := s.db.Create(user).Error
 	if err != nil {
 		return nil, err
 	}
@@ -73,8 +74,9 @@ func (s *userService) CreateUser(userPost *models.UserPost) (*models.UserDTO, er
 	return user.ToDTO(), nil
 }
 
-func (s *userService) GetUsers() ([]*models.UserDTO, error) {
-	users, err := s.repo.GetUsers()
+func (s *userService) Index() ([]*models.UserDTO, error) {
+	var users []*models.User
+	err := s.db.Find(&users).Error
 	if err != nil {
 		return nil, err
 	}
@@ -87,8 +89,9 @@ func (s *userService) GetUsers() ([]*models.UserDTO, error) {
 	return userDTOs, nil
 }
 
-func (s *userService) GetUser(id uint) (*models.UserDTO, error) {
-	user, err := s.repo.GetUser(id)
+func (s *userService) Show(id uint) (*models.UserDTO, error) {
+	var user models.User
+	err := s.db.First(&user, id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -96,15 +99,19 @@ func (s *userService) GetUser(id uint) (*models.UserDTO, error) {
 	return user.ToDTO(), nil
 }
 
-func (s *userService) UpdateUser(id uint, updates *models.UserPost) (*models.UserDTO, error) {
-	updatedUser, err := s.repo.UpdateUser(id, updates.ToUser())
+func (s *userService) Update(id uint, updates *models.UserPost) (*models.UserDTO, error) {
+	var user models.User
+	if err := s.db.First(&user, id).Error; err != nil {
+		return nil, err
+	}
+	updatedUser := updates.ToUser()
+	err := s.db.Model(&user).Updates(updatedUser).Error
 	if err != nil {
 		return nil, err
 	}
-
-	return updatedUser.ToDTO(), nil
+	return user.ToDTO(), nil
 }
 
-func (s *userService) DeleteUser(id uint) error {
-	return s.repo.DeleteUser(id)
+func (s *userService) Delete(id uint) error {
+	return s.db.Delete(&models.User{}, id).Error
 }

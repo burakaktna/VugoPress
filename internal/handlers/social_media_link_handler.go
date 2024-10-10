@@ -1,9 +1,10 @@
 package handlers
 
 import (
+	"strconv"
+
 	"github.com/burakaktna/VugoPress/internal/models"
 	"github.com/burakaktna/VugoPress/internal/services"
-	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -27,7 +28,7 @@ func RegisterSocialMediaLinkHandlers(app *fiber.App, socialMediaLinkService serv
 }
 
 func (h *SocialMediaLinkHandler) GetSocialMediaLinks(c *fiber.Ctx) error {
-	socialMediaLinks, err := h.socialMediaLinkService.GetSocialMediaLinks()
+	socialMediaLinks, err := h.socialMediaLinkService.Index()
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -42,7 +43,7 @@ func (h *SocialMediaLinkHandler) CreateSocialMediaLink(c *fiber.Ctx) error {
 		})
 	}
 
-	createdSocialMediaLink, err := h.socialMediaLinkService.CreateSocialMediaLink(socialMediaLink)
+	createdSocialMediaLink, err := h.socialMediaLinkService.Create(socialMediaLink)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -56,7 +57,7 @@ func (h *SocialMediaLinkHandler) GetSocialMediaLink(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid social media link ID"})
 	}
 
-	socialMediaLink, err := h.socialMediaLinkService.GetSocialMediaLink(uint(id))
+	socialMediaLink, err := h.socialMediaLinkService.Show(uint(id))
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Social media link not found"})
 	}
@@ -75,7 +76,7 @@ func (h *SocialMediaLinkHandler) UpdateSocialMediaLink(c *fiber.Ctx) error {
 			"error": "Cannot parse JSON",
 		})
 	}
-	updatedSocialMediaLink, err := h.socialMediaLinkService.UpdateSocialMediaLink(uint(id), updates)
+	updatedSocialMediaLink, err := h.socialMediaLinkService.Update(uint(id), updates)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Social media link not found"})
 	}
@@ -88,7 +89,7 @@ func (h *SocialMediaLinkHandler) DeleteSocialMediaLink(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid social media link ID"})
 	}
-	err = h.socialMediaLinkService.DeleteSocialMediaLink(uint(id))
+	err = h.socialMediaLinkService.Delete(uint(id))
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Social media link not found"})
 	}

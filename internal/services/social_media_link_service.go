@@ -2,46 +2,54 @@ package services
 
 import (
 	"github.com/burakaktna/VugoPress/internal/models"
-	"github.com/burakaktna/VugoPress/internal/repository"
+	"github.com/jinzhu/gorm"
 )
 
 type SocialMediaLinkService interface {
-	CreateSocialMediaLink(socialMediaLink *models.SocialMediaLink) (*models.SocialMediaLink, error)
-	GetSocialMediaLinks() ([]*models.SocialMediaLink, error)
-	GetSocialMediaLink(id uint) (*models.SocialMediaLink, error)
-	UpdateSocialMediaLink(id uint, updates *models.SocialMediaLink) (*models.SocialMediaLink, error)
-	DeleteSocialMediaLink(id uint) error
+	Create(socialMediaLink *models.SocialMediaLink) (*models.SocialMediaLink, error)
+	Index() ([]*models.SocialMediaLink, error)
+	Show(id uint) (*models.SocialMediaLink, error)
+	Update(id uint, updates *models.SocialMediaLink) (*models.SocialMediaLink, error)
+	Delete(id uint) error
 }
 
 type socialMediaLinkService struct {
-	repo repository.SocialMediaLinkRepository
+	db *gorm.DB
 }
 
-func NewSocialMediaLinkService(repo repository.SocialMediaLinkRepository) SocialMediaLinkService {
-	return &socialMediaLinkService{repo: repo}
+func NewSocialMediaLinkService(db *gorm.DB) SocialMediaLinkService {
+	return &socialMediaLinkService{db: db}
 }
 
-func (s *socialMediaLinkService) CreateSocialMediaLink(socialMediaLink *models.SocialMediaLink) (*models.SocialMediaLink, error) {
-	err := s.repo.CreateSocialMediaLink(socialMediaLink)
+func (s *socialMediaLinkService) Create(socialMediaLink *models.SocialMediaLink) (*models.SocialMediaLink, error) {
+	err := s.db.Create(socialMediaLink).Error
 	if err != nil {
 		return nil, err
 	}
-
 	return socialMediaLink, nil
 }
 
-func (s *socialMediaLinkService) GetSocialMediaLinks() ([]*models.SocialMediaLink, error) {
-	return s.repo.GetSocialMediaLinks()
+func (s *socialMediaLinkService) Index() ([]*models.SocialMediaLink, error) {
+	var links []*models.SocialMediaLink
+	err := s.db.Find(&links).Error
+	return links, err
 }
 
-func (s *socialMediaLinkService) GetSocialMediaLink(id uint) (*models.SocialMediaLink, error) {
-	return s.repo.GetSocialMediaLink(id)
+func (s *socialMediaLinkService) Show(id uint) (*models.SocialMediaLink, error) {
+	var link models.SocialMediaLink
+	err := s.db.First(&link, id).Error
+	return &link, err
 }
 
-func (s *socialMediaLinkService) UpdateSocialMediaLink(id uint, updates *models.SocialMediaLink) (*models.SocialMediaLink, error) {
-	return s.repo.UpdateSocialMediaLink(id, updates)
+func (s *socialMediaLinkService) Update(id uint, updates *models.SocialMediaLink) (*models.SocialMediaLink, error) {
+	var link models.SocialMediaLink
+	if err := s.db.First(&link, id).Error; err != nil {
+		return nil, err
+	}
+	err := s.db.Model(&link).Updates(updates).Error
+	return &link, err
 }
 
-func (s *socialMediaLinkService) DeleteSocialMediaLink(id uint) error {
-	return s.repo.DeleteSocialMediaLink(id)
+func (s *socialMediaLinkService) Delete(id uint) error {
+	return s.db.Delete(&models.SocialMediaLink{}, id).Error
 }

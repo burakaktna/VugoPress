@@ -2,45 +2,54 @@ package services
 
 import (
 	"github.com/burakaktna/VugoPress/internal/models"
-	"github.com/burakaktna/VugoPress/internal/repository"
+	"github.com/jinzhu/gorm"
 )
 
 type ArticleService interface {
-	CreateArticle(article *models.Article) (*models.Article, error)
-	GetArticles() ([]*models.Article, error)
-	GetArticle(id uint) (*models.Article, error)
-	UpdateArticle(id uint, updates *models.Article) (*models.Article, error)
-	DeleteArticle(id uint) error
+	Create(article *models.Article) (*models.Article, error)
+	Index() ([]*models.Article, error)
+	Show(id uint) (*models.Article, error)
+	Update(id uint, updates *models.Article) (*models.Article, error)
+	Delete(id uint) error
 }
 
 type articleService struct {
-	repo repository.ArticleRepository
+	db *gorm.DB
 }
 
-func NewArticleService(repo repository.ArticleRepository) ArticleService {
-	return &articleService{repo: repo}
+func NewArticleService(db *gorm.DB) ArticleService {
+	return &articleService{db: db}
 }
 
-func (s *articleService) CreateArticle(article *models.Article) (*models.Article, error) {
-	err := s.repo.CreateArticle(article)
+func (s *articleService) Create(article *models.Article) (*models.Article, error) {
+	err := s.db.Create(article).Error
 	if err != nil {
 		return nil, err
 	}
 	return article, nil
 }
 
-func (s *articleService) GetArticles() ([]*models.Article, error) {
-	return s.repo.GetArticles()
+func (s *articleService) Index() ([]*models.Article, error) {
+	var articles []*models.Article
+	err := s.db.Find(&articles).Error
+	return articles, err
 }
 
-func (s *articleService) GetArticle(id uint) (*models.Article, error) {
-	return s.repo.GetArticle(id)
+func (s *articleService) Show(id uint) (*models.Article, error) {
+	var article models.Article
+	err := s.db.First(&article, id).Error
+	return &article, err
 }
 
-func (s *articleService) UpdateArticle(id uint, updates *models.Article) (*models.Article, error) {
-	return s.repo.UpdateArticle(id, updates)
+func (s *articleService) Update(id uint, updates *models.Article) (*models.Article, error) {
+	var article models.Article
+	if err := s.db.First(&article, id).Error; err != nil {
+		return nil, err
+	}
+	err := s.db.Model(&article).Updates(updates).Error
+	return &article, err
 }
 
-func (s *articleService) DeleteArticle(id uint) error {
-	return s.repo.DeleteArticle(id)
+func (s *articleService) Delete(id uint) error {
+	return s.db.Delete(&models.Article{}, id).Error
 }

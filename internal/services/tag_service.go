@@ -2,45 +2,54 @@ package services
 
 import (
 	"github.com/burakaktna/VugoPress/internal/models"
-	"github.com/burakaktna/VugoPress/internal/repository"
+	"github.com/jinzhu/gorm"
 )
 
 type TagService interface {
-	CreateTag(tag *models.Tag) (*models.Tag, error)
-	GetTags() ([]*models.Tag, error)
-	GetTag(id uint) (*models.Tag, error)
-	UpdateTag(id uint, updates *models.Tag) (*models.Tag, error)
-	DeleteTag(id uint) error
+	Create(tag *models.Tag) (*models.Tag, error)
+	Index() ([]*models.Tag, error)
+	Show(id uint) (*models.Tag, error)
+	Update(id uint, updates *models.Tag) (*models.Tag, error)
+	Delete(id uint) error
 }
 
 type tagService struct {
-	repo repository.TagRepository
+	db *gorm.DB
 }
 
-func NewTagService(repo repository.TagRepository) TagService {
-	return &tagService{repo: repo}
+func NewTagService(db *gorm.DB) TagService {
+	return &tagService{db: db}
 }
 
-func (s *tagService) CreateTag(tag *models.Tag) (*models.Tag, error) {
-	err := s.repo.CreateTag(tag)
+func (s *tagService) Create(tag *models.Tag) (*models.Tag, error) {
+	err := s.db.Create(tag).Error
 	if err != nil {
 		return nil, err
 	}
 	return tag, nil
 }
 
-func (s *tagService) GetTags() ([]*models.Tag, error) {
-	return s.repo.GetTags()
+func (s *tagService) Index() ([]*models.Tag, error) {
+	var tags []*models.Tag
+	err := s.db.Find(&tags).Error
+	return tags, err
 }
 
-func (s *tagService) GetTag(id uint) (*models.Tag, error) {
-	return s.repo.GetTag(id)
+func (s *tagService) Show(id uint) (*models.Tag, error) {
+	var tag models.Tag
+	err := s.db.First(&tag, id).Error
+	return &tag, err
 }
 
-func (s *tagService) UpdateTag(id uint, updates *models.Tag) (*models.Tag, error) {
-	return s.repo.UpdateTag(id, updates)
+func (s *tagService) Update(id uint, updates *models.Tag) (*models.Tag, error) {
+	var tag models.Tag
+	if err := s.db.First(&tag, id).Error; err != nil {
+		return nil, err
+	}
+	err := s.db.Model(&tag).Updates(updates).Error
+	return &tag, err
 }
 
-func (s *tagService) DeleteTag(id uint) error {
-	return s.repo.DeleteTag(id)
+func (s *tagService) Delete(id uint) error {
+	return s.db.Delete(&models.Tag{}, id).Error
 }

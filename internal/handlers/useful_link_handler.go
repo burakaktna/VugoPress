@@ -1,22 +1,23 @@
 package handlers
 
 import (
-	"github.com/burakaktna/VugoPress/internal/models"
-	"github.com/burakaktna/VugoPress/internal/services"
+	"github.com/burakaktna/VugoPress/pkg/utils"
 	"strconv"
 
+	"github.com/burakaktna/VugoPress/internal/models"
+	"github.com/burakaktna/VugoPress/internal/services"
 	"github.com/gofiber/fiber/v2"
 )
 
 type UsefulLinkHandler struct {
-	usefulLinkService services.UsefulLinksService
+	usefulLinkService services.UsefulLinkService
 }
 
-func NewUsefulLinkHandler(usefulLinkService services.UsefulLinksService) *UsefulLinkHandler {
+func NewUsefulLinkHandler(usefulLinkService services.UsefulLinkService) *UsefulLinkHandler {
 	return &UsefulLinkHandler{usefulLinkService: usefulLinkService}
 }
 
-func RegisterUsefulLinkHandlers(app *fiber.App, usefulLinkService services.UsefulLinksService, jwtMiddleware fiber.Handler) {
+func RegisterUsefulLinkHandlers(app *fiber.App, usefulLinkService services.UsefulLinkService, jwtMiddleware fiber.Handler) {
 	usefulLinkHandler := NewUsefulLinkHandler(usefulLinkService)
 
 	app.Get("/useful_links", usefulLinkHandler.GetUsefulLinks)
@@ -27,7 +28,7 @@ func RegisterUsefulLinkHandlers(app *fiber.App, usefulLinkService services.Usefu
 }
 
 func (h *UsefulLinkHandler) GetUsefulLinks(c *fiber.Ctx) error {
-	usefulLinks, err := h.usefulLinkService.GetUsefulLinks()
+	usefulLinks, err := h.usefulLinkService.Index()
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -38,11 +39,17 @@ func (h *UsefulLinkHandler) CreateUsefulLink(c *fiber.Ctx) error {
 	usefulLink := new(models.UsefulLink)
 	if err := c.BodyParser(usefulLink); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Cannot parse JSON",
+			"error": "JSON ayrıştırılamıyor",
 		})
 	}
 
-	createdUsefulLink, err := h.usefulLinkService.CreateUsefulLink(usefulLink)
+	var errors []utils.ErrorResponse
+	errors = validator.Validate(usefulLink)
+	if errors != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(errors)
+	}
+
+	createdUsefulLink, err := h.usefulLinkService.Create(usefulLink)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -56,7 +63,7 @@ func (h *UsefulLinkHandler) GetUsefulLink(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid useful link ID"})
 	}
 
-	usefulLink, err := h.usefulLinkService.GetUsefulLink(uint(id))
+	usefulLink, err := h.usefulLinkService.Show(uint(id))
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Useful link not found"})
 	}
@@ -66,18 +73,25 @@ func (h *UsefulLinkHandler) GetUsefulLink(c *fiber.Ctx) error {
 func (h *UsefulLinkHandler) UpdateUsefulLink(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid useful link ID"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Geçersiz faydalı bağlantı ID"})
 	}
 
 	updates := new(models.UsefulLink)
 	if err := c.BodyParser(updates); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Cannot parse JSON",
+			"error": "JSON ayrıştırılamıyor",
 		})
 	}
-	updatedUsefulLink, err := h.usefulLinkService.UpdateUsefulLink(uint(id), updates)
+
+	var errors []utils.ErrorResponse
+	errors = validator.Validate(updates)
+	if errors != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(errors)
+	}
+
+	updatedUsefulLink, err := h.usefulLinkService.Update(uint(id), updates)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Useful link not found"})
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Faydalı bağlantı bulunamadı"})
 	}
 
 	return c.JSON(updatedUsefulLink)
@@ -88,7 +102,7 @@ func (h *UsefulLinkHandler) DeleteUsefulLink(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid useful link ID"})
 	}
-	err = h.usefulLinkService.DeleteUsefulLink(uint(id))
+	err = h.usefulLinkService.Delete(uint(id))
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Useful link not found"})
 	}
