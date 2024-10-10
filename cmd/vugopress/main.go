@@ -1,4 +1,3 @@
-// cmd/main.go
 package main
 
 import (
@@ -30,17 +29,22 @@ func main() {
 		}
 	}(db)
 
-	// Migrate models
 	migrateModels(db)
 
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			return c.Status(fiber.StatusBadRequest).JSON(utils.GlobalErrorHandlerResp{
+				Success: false,
+				Message: err.Error(),
+			})
+		},
+	})
 	app.Use(logger.New())
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
 	}))
 
-	// Handlers
 	handlers.RegisterHandlers(app, db, middleware.JwtMiddleware(cfg.AppKey))
 
 	log.Fatal(app.Listen(fmt.Sprintf(":%s", cfg.AppPort)))
