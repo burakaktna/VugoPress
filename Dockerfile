@@ -1,4 +1,3 @@
-# Build stage
 FROM golang:1.20-alpine AS builder
 
 WORKDIR /app
@@ -8,7 +7,6 @@ RUN go mod download
 COPY . .
 RUN go build -o main ./cmd/vugopress
 
-# Run stage
 FROM alpine:latest
 
 WORKDIR /app
